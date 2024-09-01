@@ -1,4 +1,6 @@
 #include "VulkanInstance.h"
+
+#include <cstring>
 #include <stdexcept>
 #include <iostream>
 
