@@ -54,15 +54,17 @@ int main() {
         vulkanSwapchain.init();
         Logger::getInstance().log("Vulkan Swapchain Initialized.");
 
-       std::vector<ShaderModule> shaderModules = {
-        ShaderModule(vulkanDevice.getDevice(), "Render/Shaders/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
-        ShaderModule(vulkanDevice.getDevice(), "Render/Shaders/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+        // Load and compile shaders
+        std::vector<ShaderModule> shaderModules = {
+            ShaderModule(vulkanDevice.getDevice(), "Render/Shaders/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT),
+            ShaderModule(vulkanDevice.getDevice(), "Render/Shaders/triangle.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
         };
+        Logger::getInstance().log("Shaders loaded and compiled.");
 
+        // Initialize Pipeline
         Pipeline pipeline(vulkanDevice, vulkanSwapchain, vulkanSwapchain.getRenderPass());  // Pass render pass here
         pipeline.createGraphicsPipeline(vulkanSwapchain.getSwapchainExtent(), shaderModules);
         Logger::getInstance().log("Pipeline Initialized.");
-        ;
 
         // Main render loop
         while (!glfwWindowShouldClose(window)) {
@@ -71,12 +73,14 @@ int main() {
             // Acquire an image from the swapchain
             uint32_t imageIndex;
             VkResult result = vkAcquireNextImageKHR(vulkanDevice.getDevice(), vulkanSwapchain.getSwapchain(), UINT64_MAX, vulkanSwapchain.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
+            Logger::getInstance().log("vkAcquireNextImageKHR result: " + std::to_string(result));
 
             if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+                Logger::getInstance().log("Swapchain out of date, skipping frame.");
                 // Handle window resize/recreation of the swapchain
-                // For now, we can skip this as we haven't handled resizing yet
                 continue;
-            } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            }
+            else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
                 Logger::getInstance().logError("Failed to acquire swapchain image.");
                 throw std::runtime_error("Failed to acquire swapchain image.");
             }
@@ -92,7 +96,7 @@ int main() {
             submitInfo.pWaitDstStageMask = waitStages;
 
             // Assume you have a command buffer recorded with rendering commands
-            VkCommandBuffer commandBuffers[] = { vulkanSwapchain.getCommandBuffer(imageIndex) };
+            VkCommandBuffer commandBuffers[] = { vulkanSwapchain.getCommandBuffer() };
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = commandBuffers;
 
@@ -104,11 +108,11 @@ int main() {
                 Logger::getInstance().logError("Failed to submit draw command buffer.");
                 throw std::runtime_error("Failed to submit draw command buffer.");
             }
+            Logger::getInstance().log("Draw command buffer submitted.");
 
             // Present the rendered image to the screen
             VkPresentInfoKHR presentInfo{};
             presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
             presentInfo.waitSemaphoreCount = 1;
             presentInfo.pWaitSemaphores = signalSemaphores;
 
@@ -118,16 +122,19 @@ int main() {
             presentInfo.pImageIndices = &imageIndex;
 
             result = vkQueuePresentKHR(vulkanDevice.getPresentQueue(), &presentInfo);
+            Logger::getInstance().log("vkQueuePresentKHR result: " + std::to_string(result));
 
             if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+                Logger::getInstance().log("Swapchain out of date or suboptimal, handling resize.");
                 // Handle window resize/recreation of the swapchain
-                // For now, we can skip this as we haven't handled resizing yet
-            } else if (result != VK_SUCCESS) {
+            }
+            else if (result != VK_SUCCESS) {
                 Logger::getInstance().logError("Failed to present swapchain image.");
                 throw std::runtime_error("Failed to present swapchain image.");
             }
 
             vkQueueWaitIdle(vulkanDevice.getPresentQueue()); // Ensure the presentation is done before moving to the next frame
+            Logger::getInstance().log("Frame rendered and presented.");
         }
 
         // Clean up
@@ -141,7 +148,8 @@ int main() {
         glfwTerminate();
         Logger::getInstance().log("GLFW Terminated.");
 
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         Logger::getInstance().logError(std::string("Exception: ") + e.what());
         return EXIT_FAILURE;
     }
