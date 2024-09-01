@@ -4,15 +4,16 @@
 #include <vector>
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
-#include "ShaderModule.h"
 
 class Pipeline {
 public:
     Pipeline(VulkanDevice& device, VulkanSwapchain& swapchain, VkRenderPass renderPass);
     ~Pipeline();
 
-    void createGraphicsPipeline(VkExtent2D swapchainExtent, const std::vector<ShaderModule>& shaderModules);
+    void createGraphicsPipeline(VkExtent2D swapchainExtent);  // Updated function signature
     void cleanup();
+
+    VkPipeline getGraphicsPipeline() const { return graphicsPipeline; }
 
 private:
     VulkanDevice& device;
@@ -21,5 +22,6 @@ private:
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
 
-    VkShaderModule createShaderModule(const std::vector<char>& code);
+    void createPipelineLayout();  
 };
+

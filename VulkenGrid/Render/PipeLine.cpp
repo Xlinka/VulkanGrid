@@ -1,5 +1,4 @@
 #include "Pipeline.h"
-#include "Logger.h"
 #include <stdexcept>
 
 Pipeline::Pipeline(VulkanDevice& device, VulkanSwapchain& swapchain, VkRenderPass renderPass)
@@ -11,18 +10,8 @@ Pipeline::~Pipeline() {
     cleanup();
 }
 
-void Pipeline::createGraphicsPipeline(VkExtent2D swapchainExtent, const std::vector<ShaderModule>& shaderModules) {
-    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-
-    for (const auto& shaderModule : shaderModules) {
-        VkPipelineShaderStageCreateInfo shaderStageInfo{};
-        shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStageInfo.stage = shaderModule.getShaderStage();
-        shaderStageInfo.module = shaderModule.getShaderModule();
-        shaderStageInfo.pName = "main";
-
-        shaderStages.push_back(shaderStageInfo);
-    }
+void Pipeline::createGraphicsPipeline(VkExtent2D swapchainExtent) {
+    Logger::getInstance().log("Creating Graphics Pipeline...");
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -84,13 +73,14 @@ void Pipeline::createGraphicsPipeline(VkExtent2D swapchainExtent, const std::vec
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
     if (vkCreatePipelineLayout(device.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create pipeline layout!");
+        Logger::getInstance().logError("Failed to create pipeline layout.");
+        throw std::runtime_error("Failed to create pipeline layout.");
     }
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-    pipelineInfo.pStages = shaderStages.data();
+    pipelineInfo.stageCount = 0; // No shader stages, just clear the screen
+    pipelineInfo.pStages = nullptr;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pViewportState = &viewportState;
@@ -102,15 +92,20 @@ void Pipeline::createGraphicsPipeline(VkExtent2D swapchainExtent, const std::vec
     pipelineInfo.subpass = 0;
 
     if (vkCreateGraphicsPipelines(device.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create graphics pipeline!");
+        Logger::getInstance().logError("Failed to create graphics pipeline.");
+        throw std::runtime_error("Failed to create graphics pipeline.");
     }
+
+    Logger::getInstance().log("Graphics Pipeline created successfully.");
 }
 
 void Pipeline::cleanup() {
     if (graphicsPipeline != VK_NULL_HANDLE) {
         vkDestroyPipeline(device.getDevice(), graphicsPipeline, nullptr);
+        Logger::getInstance().log("Graphics Pipeline destroyed.");
     }
     if (pipelineLayout != VK_NULL_HANDLE) {
         vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
+        Logger::getInstance().log("Pipeline Layout destroyed.");
     }
 }

@@ -2,12 +2,16 @@
 #include <stdexcept>
 
 RenderPass::RenderPass(VkDevice device, VkFormat swapchainImageFormat)
-    : device(device) {
+    : device(device), renderPass(VK_NULL_HANDLE) {
+    Logger::getInstance().log("Creating RenderPass...");
     createRenderPass(swapchainImageFormat);
 }
 
 RenderPass::~RenderPass() {
-    vkDestroyRenderPass(device, renderPass, nullptr);
+    if (renderPass != VK_NULL_HANDLE) {
+        vkDestroyRenderPass(device, renderPass, nullptr);
+        Logger::getInstance().log("RenderPass destroyed.");
+    }
 }
 
 void RenderPass::createRenderPass(VkFormat swapchainImageFormat) {
@@ -38,6 +42,8 @@ void RenderPass::createRenderPass(VkFormat swapchainImageFormat) {
     renderPassInfo.pSubpasses = &subpass;
 
     if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render pass!");
+        Logger::getInstance().logError("Failed to create RenderPass.");
+        throw std::runtime_error("Failed to create RenderPass.");
     }
+    Logger::getInstance().log("RenderPass created successfully.");
 }

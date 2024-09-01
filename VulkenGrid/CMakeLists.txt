@@ -34,7 +34,9 @@ set(SOURCES
     Logger/Logger.cpp
     Render/Pipeline.cpp
     Render/ShaderModule.cpp
+    Render/RenderPass.cpp  # <-- Add this line
 )
+
 
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCES})

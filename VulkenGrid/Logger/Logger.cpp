@@ -1,7 +1,10 @@
 #include "Logger.h"
+#include <filesystem>
 
 Logger::Logger() {
-    logFile.open("VulkanGrid.log", std::ios::out | std::ios::app);
+    std::filesystem::create_directory("logs");
+    std::string filename = "logs/VulkanGrid_" + getTimestamp() + ".log";
+    logFile.open(filename, std::ios::out | std::ios::app);
     if (!logFile.is_open()) {
         throw std::runtime_error("Failed to open log file.");
     }
@@ -34,9 +37,9 @@ std::string Logger::getTimestamp() {
     std::stringstream ss;
     ss << (localTime->tm_year + 1900) << "-"
        << (localTime->tm_mon + 1) << "-"
-       << localTime->tm_mday << " "
-       << localTime->tm_hour << ":"
-       << localTime->tm_min << ":"
+       << localTime->tm_mday << "_"
+       << localTime->tm_hour << "-"
+       << localTime->tm_min << "-"
        << localTime->tm_sec;
     return ss.str();
 }

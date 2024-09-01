@@ -3,8 +3,11 @@
 #include <iostream>
 
 void VulkanInstance::init() {
+    Logger::getInstance().log("Initializing Vulkan instance...");
+
     if (validationLayers.size() > 0 && !checkValidationLayerSupport()) {
-        throw std::runtime_error("validation layers requested, but not available!");
+        Logger::getInstance().logError("Validation layers requested, but not available.");
+        throw std::runtime_error("Validation layers requested, but not available!");
     }
 
     VkApplicationInfo appInfo{};
@@ -30,13 +33,19 @@ void VulkanInstance::init() {
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create Vulkan instance!");
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+    if (result != VK_SUCCESS) {
+        Logger::getInstance().logError("Failed to create Vulkan instance. VkResult: " + std::to_string(result));
+        throw std::runtime_error("Failed to create Vulkan instance!");
     }
+
+    Logger::getInstance().log("Vulkan Instance created successfully.");
 }
 
 void VulkanInstance::cleanup() {
+    Logger::getInstance().log("Destroying Vulkan instance...");
     vkDestroyInstance(instance, nullptr);
+    Logger::getInstance().log("Vulkan instance destroyed.");
 }
 
 bool VulkanInstance::checkValidationLayerSupport() {
@@ -74,5 +83,6 @@ std::vector<const char*> VulkanInstance::getRequiredExtensions() {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
+    Logger::getInstance().log("Required extensions gathered.");
     return extensions;
 }

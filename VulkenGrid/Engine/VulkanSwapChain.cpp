@@ -7,6 +7,8 @@ VulkanSwapchain::VulkanSwapchain(VulkanInstance& instance, VulkanDevice& device,
     : instance(instance), device(device), surface(surface) {}
 
 void VulkanSwapchain::init() {
+    Logger::getInstance().log("Initializing Vulkan Swapchain...");
+
     SwapChainSupportDetails swapChainSupport = device.querySwapChainSupport(surface);
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -37,8 +39,8 @@ void VulkanSwapchain::init() {
     }
     else {
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        createInfo.queueFamilyIndexCount = 0; // Optional
-        createInfo.pQueueFamilyIndices = nullptr; // Optional
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
     }
 
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
@@ -59,7 +61,7 @@ void VulkanSwapchain::init() {
     swapchainImageFormat = surfaceFormat.format;
     swapchainExtent = extent;
 
-    // Create image views
+    Logger::getInstance().log("Creating image views...");
     swapchainImageViews.resize(swapchainImages.size());
     for (size_t i = 0; i < swapchainImages.size(); i++) {
         VkImageViewCreateInfo createInfo{};
@@ -83,7 +85,7 @@ void VulkanSwapchain::init() {
         }
     }
 
-    // Create semaphores
+    Logger::getInstance().log("Creating semaphores...");
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -94,12 +96,19 @@ void VulkanSwapchain::init() {
     }
 
     createRenderPass();  // Initialize render pass
+    createFramebuffers(); // Initialize framebuffers
     createCommandBuffer();  // Initialize command buffer
 
     Logger::getInstance().log("Vulkan Swapchain and associated resources initialized successfully.");
 }
 
 void VulkanSwapchain::cleanup() {
+    Logger::getInstance().log("Cleaning up Vulkan Swapchain...");
+
+    for (auto framebuffer : swapchainFramebuffers) {
+        vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
+    }
+
     for (auto imageView : swapchainImageViews) {
         vkDestroyImageView(device.getDevice(), imageView, nullptr);
     }
@@ -142,7 +151,8 @@ VkExtent2D VulkanSwapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 }
 
 void VulkanSwapchain::createRenderPass() {
-    // Example setup for render pass
+    Logger::getInstance().log("Creating RenderPass for Swapchain...");
+
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapchainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -170,13 +180,42 @@ void VulkanSwapchain::createRenderPass() {
     renderPassInfo.pSubpasses = &subpass;
 
     if (vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        Logger::getInstance().logError("Failed to create render pass!");
-        throw std::runtime_error("Failed to create render pass!");
+        Logger::getInstance().logError("Failed to create RenderPass for Swapchain!");
+        throw std::runtime_error("Failed to create RenderPass!");
     }
+
+    Logger::getInstance().log("RenderPass created successfully.");
+}
+
+void VulkanSwapchain::createFramebuffers() {
+    Logger::getInstance().log("Creating Framebuffers for Swapchain...");
+
+    swapchainFramebuffers.resize(swapchainImageViews.size());
+
+    for (size_t i = 0; i < swapchainImageViews.size(); i++) {
+        VkImageView attachments[] = { swapchainImageViews[i] };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = swapchainExtent.width;
+        framebufferInfo.height = swapchainExtent.height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(device.getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS) {
+            Logger::getInstance().logError("Failed to create framebuffer!");
+            throw std::runtime_error("Failed to create framebuffer!");
+        }
+    }
+
+    Logger::getInstance().log("Framebuffers created successfully.");
 }
 
 void VulkanSwapchain::createCommandBuffer() {
-    // Example setup for command buffer
+    Logger::getInstance().log("Creating Command Buffer for Swapchain...");
+
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -187,4 +226,6 @@ void VulkanSwapchain::createCommandBuffer() {
         Logger::getInstance().logError("Failed to allocate command buffer!");
         throw std::runtime_error("Failed to allocate command buffer!");
     }
+
+    Logger::getInstance().log("Command Buffer created successfully.");
 }
