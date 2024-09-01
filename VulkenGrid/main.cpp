@@ -39,6 +39,8 @@ int main() {
     VulkanInstance vulkanInstance;
     VulkanDevice device(vulkanInstance);
 
+    vulkanInstance.init();
+
     VkSurfaceKHR surface;
     if (glfwCreateWindowSurface(vulkanInstance.getInstance(), window, nullptr, &surface) != VK_SUCCESS) {
         Logger::getInstance().logError("Failed to create Vulkan surface.");
