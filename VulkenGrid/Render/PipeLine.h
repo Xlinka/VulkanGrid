@@ -10,7 +10,7 @@ public:
     Pipeline(VulkanDevice& device, VulkanSwapchain& swapchain, VkRenderPass renderPass);
     ~Pipeline();
 
-    void createGraphicsPipeline(VkExtent2D swapchainExtent);  // Updated function signature
+    void createGraphicsPipeline(VkExtent2D swapchainExtent);
     void cleanup();
 
     VkPipeline getGraphicsPipeline() const { return graphicsPipeline; }
@@ -22,6 +22,5 @@ private:
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
 
-    void createPipelineLayout();  
+    void createPipelineLayout();
 };
-
