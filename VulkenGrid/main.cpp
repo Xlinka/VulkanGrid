@@ -10,8 +10,8 @@
 #include "RenderPass.h"
 #include "PipeLine.h"
 #include "Logger.h"
+#include "SystemInfo.h"  
 
-// Function declarations
 void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline);
 void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
 void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
@@ -20,12 +20,31 @@ void cleanup(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchai
 int main() {
     Logger::getInstance().log("Application started.");
 
+    // Log system info before any Vulkan setup
+    try {
+        Logger::getInstance().log("Collecting system information...");
+        Logger::getInstance().log("Operating System: " + SystemInfo::getOSName());
+        Logger::getInstance().log("CPU: " + SystemInfo::getCPUName());
+        Logger::getInstance().log("RAM Available: " + std::to_string(SystemInfo::getAvailableRAM()) + " GB");
+        Logger::getInstance().log("RAM Usable: " + std::to_string(SystemInfo::getUsableRAM()) + " GB");
+        Logger::getInstance().log("GPU: " + SystemInfo::getGPUName());
+        Logger::getInstance().log("VRAM: " + std::to_string(SystemInfo::getGPUVRAM()) + " GB");
+        Logger::getInstance().log("System information collected.");
+    } catch (const std::exception& e) {
+        Logger::getInstance().logError("Failed to collect system information: " + std::string(e.what()));
+        return -1;
+    }
+
     // Initialize GLFW
     if (!glfwInit()) {
         Logger::getInstance().logError("Failed to initialize GLFW.");
         return -1;
     }
     Logger::getInstance().log("GLFW Initialized.");
+
+    // Configure GLFW to not use OpenGL and set the window to be resizable
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     // Create GLFW window
     GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan Window", nullptr, nullptr);
@@ -39,12 +58,22 @@ int main() {
     VulkanInstance vulkanInstance;
     VulkanDevice device(vulkanInstance);
 
-    vulkanInstance.init();
+    // Initialize Vulkan instance
+    try {
+        vulkanInstance.init();
+    } catch (const std::runtime_error& e) {
+        Logger::getInstance().logError(std::string("Failed to initialize Vulkan Instance: ") + e.what());
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
+    }
 
     VkSurfaceKHR surface;
     if (glfwCreateWindowSurface(vulkanInstance.getInstance(), window, nullptr, &surface) != VK_SUCCESS) {
         Logger::getInstance().logError("Failed to create Vulkan surface.");
-        throw std::runtime_error("Failed to create Vulkan surface.");
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
     }
     Logger::getInstance().log("Vulkan Surface Created.");
 
@@ -53,17 +82,25 @@ int main() {
     Pipeline pipeline(device, swapchain, renderPass.getRenderPass());
 
     try {
+        // Initialize Vulkan objects
         initVulkan(window, vulkanInstance, device, swapchain, renderPass, pipeline);
+        Logger::getInstance().log("Vulkan successfully initialized.");
+
+        // Enter the main application loop
         mainLoop(window, device, swapchain, pipeline, renderPass);
-    }
-    catch (const std::exception& e) {
-        Logger::getInstance().logError(e.what());
+    } catch (const std::exception& e) {
+        Logger::getInstance().logError(std::string("Error during execution: ") + e.what());
+        cleanup(window, device, swapchain, pipeline, renderPass);
         return -1;
     }
 
+    // Cleanup resources
     cleanup(window, device, swapchain, pipeline, renderPass);
+    Logger::getInstance().log("Application exited cleanly.");
+
     return 0;
 }
+
 
 void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline) {
     Logger::getInstance().log("Initializing Vulkan...");

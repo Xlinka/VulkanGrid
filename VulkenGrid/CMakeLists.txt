@@ -18,6 +18,7 @@ set(SOURCES
         Render/PipeLine.cpp
         Render/ShaderModule.cpp
         Render/RenderPass.cpp
+        Logger/SystemInfo.cpp
 )
 
 
