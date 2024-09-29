@@ -11,6 +11,27 @@
 #include <atlbase.h>
 #pragma comment(lib, "dxgi.lib")
 
+typedef LONG NTSTATUS, *PNTSTATUS;
+#define STATUS_SUCCESS (0x00000000)
+
+typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+RTL_OSVERSIONINFOW GetRealOSVersion() {
+    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
+    if (hMod) {
+        RtlGetVersionPtr fxPtr = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+        if (fxPtr != nullptr) {
+            RTL_OSVERSIONINFOW rovi = { 0 };
+            rovi.dwOSVersionInfoSize = sizeof(rovi);
+            if (STATUS_SUCCESS == fxPtr(&rovi)) {
+                return rovi;
+            }
+        }
+    }
+    RTL_OSVERSIONINFOW rovi = { 0 };
+    return rovi;
+}
+
 namespace {
     std::string WStringToString(const std::wstring& wstr) {
         if (wstr.empty()) return std::string();
@@ -44,17 +65,12 @@ namespace {
 // Get the name of the OS
 std::string SystemInfo::getOSName() {
 #ifdef _WIN32
-    if (IsWindows10OrGreater()) {
-        HKEY hKey;
-        LONG lRes = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey);
-        if (lRes == ERROR_SUCCESS) {
-            wchar_t value[256];
-            DWORD valueSize = sizeof(value);
-            LONG queryRes = RegQueryValueExW(hKey, L"ProductName", NULL, NULL, (LPBYTE)value, &valueSize);
-            RegCloseKey(hKey);
-            if (queryRes == ERROR_SUCCESS) {
-                return WStringToString(value);
-            }
+    RTL_OSVERSIONINFOW version = GetRealOSVersion();
+    if (version.dwMajorVersion == 10) {
+        if (version.dwBuildNumber >= 22000) { // Windows 11 build numbers start from 22000
+            return "Windows 11";
+        } else {
+            return "Windows 10";
         }
     }
     return "Windows (version unknown)";
