@@ -24,7 +24,7 @@ void VulkanSwapchain::init() {
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = surface;
     createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = surfaceFormat.format;
+    createInfo.imageFormat = surfaceFormat.format; // Updated to use the selected format
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
     createInfo.imageExtent = extent;
     createInfo.imageArrayLayers = 1;
@@ -123,19 +123,25 @@ void VulkanSwapchain::cleanup() {
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            return availableFormat;
+            Logger::getInstance().log("Selected swap surface format: VK_FORMAT_B8G8R8A8_SRGB");
+            return availableFormat; // Return preferred format
         }
     }
-    return availableFormats[0];
+    
+    // Log fallback format
+    Logger::getInstance().log("Fallback to first available surface format.");
+    return availableFormats[0]; // Fallback to the first format if preferred isn't available
 }
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            return availablePresentMode;
+            return availablePresentMode; // Use mailbox mode if available
         }
     }
-    return VK_PRESENT_MODE_FIFO_KHR;
+    
+    Logger::getInstance().log("Using FIFO present mode as fallback.");
+    return VK_PRESENT_MODE_FIFO_KHR; // Default to FIFO if no other present modes are available
 }
 
 VkExtent2D VulkanSwapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
@@ -154,12 +160,12 @@ void VulkanSwapchain::createRenderPass() {
     Logger::getInstance().log("Creating RenderPass for Swapchain...");
 
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapchainImageFormat;
+    colorAttachment.format = swapchainImageFormat; // Use the selected swapchain image format
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // This is correct: loadOp is of type VkAttachmentLoadOp
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // This is correct: storeOp is of type VkAttachmentStoreOp
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // Correct: same type
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; // Correct: same type
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
@@ -180,7 +186,7 @@ void VulkanSwapchain::createRenderPass() {
     renderPassInfo.pSubpasses = &subpass;
 
     if (vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        Logger::getInstance().logError("Failed to create RenderPass for Swapchain!");
+        Logger::getInstance().logError("Failed to create RenderPass!");
         throw std::runtime_error("Failed to create RenderPass!");
     }
 
