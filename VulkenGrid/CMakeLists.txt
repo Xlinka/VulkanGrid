@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Specify source files
 set(SOURCES
         main.cpp
-
+        
         Engine/VulkanInstance.cpp
         Engine/VulkanDevice.cpp
         Engine/VulkanSwapChain.cpp
@@ -15,12 +15,16 @@ set(SOURCES
         Engine/VulkanBuffer.cpp
         Engine/VulkanCommandBuffer.cpp
         Logger/Logger.cpp
-        Render/PipeLine.cpp
+        Logger/SystemInfo.cpp
+        
+        Render/Pipeline.cpp
         Render/ShaderModule.cpp
         Render/RenderPass.cpp
-        Logger/SystemInfo.cpp
+        
+        Utils/FilesUtils.cpp
+        Utils/VulkanUtils.cpp
+        Utils/LoggerUtils.cpp
 )
-
 
 # Check if we're compiling on Linux
 if(UNIX AND NOT APPLE)

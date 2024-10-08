@@ -1,10 +1,11 @@
 #include "ShaderModule.h"
 #include <fstream>
 #include <stdexcept>
+#include "../Utils/FileUtils.h"
 
 ShaderModule::ShaderModule(VkDevice device, const std::string& filepath, VkShaderStageFlagBits stage)
     : device(device), shaderStage(stage) {
-    auto code = readFile(filepath);
+    auto code = FileUtils::readFile(filepath);
     createShaderModule(code);
 }
 
