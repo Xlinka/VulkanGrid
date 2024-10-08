@@ -1,18 +1,27 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "Logger.h"
+#include <vector>
+#include "VulkanDevice.h"
+#include "VulkanSwapChain.h"
 
 class RenderPass {
 public:
-    RenderPass(VkDevice device, VkFormat swapchainImageFormat);
+    RenderPass(VulkanDevice& device, VulkanSwapchain& swapchain, VkFormat swapchainImageFormat);
     ~RenderPass();
-
-    VkRenderPass getRenderPass() const { return renderPass; }
+    
+    VkRenderPass getRenderPass() const;
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void drawFrame();
 
 private:
-    VkDevice device;
+    VulkanDevice& device;
+    VulkanSwapchain& swapchain;
     VkRenderPass renderPass;
+    std::vector<VkFramebuffer> framebuffers;
+    std::vector<VkCommandBuffer> commandBuffers;
 
     void createRenderPass(VkFormat swapchainImageFormat);
+    void createFramebuffers();
+    void createCommandBuffers();
 };

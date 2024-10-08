@@ -8,9 +8,10 @@
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
 #include "RenderPass.h"
-#include "PipeLine.h"
+#include "Pipeline.h"
 #include "Logger.h"
 #include "SystemInfo.h"  
+#include "../Utils/LoggerUtils.h"
 
 void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline);
 void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
@@ -78,7 +79,7 @@ int main() {
     Logger::getInstance().log("Vulkan Surface Created.");
 
     VulkanSwapchain swapchain(vulkanInstance, device, surface);
-    RenderPass renderPass(device.getDevice(), swapchain.getSwapchainImageFormat());
+    RenderPass renderPass(device, swapchain, swapchain.getSwapchainImageFormat());
     Pipeline pipeline(device, swapchain, renderPass.getRenderPass());
 
     try {
@@ -101,7 +102,6 @@ int main() {
     return 0;
 }
 
-
 void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline) {
     Logger::getInstance().log("Initializing Vulkan...");
 
@@ -115,10 +115,6 @@ void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& devi
 
     swapchain.init();
     Logger::getInstance().log("Vulkan Swapchain Initialized.");
-
-    // Create RenderPass
-    renderPass = RenderPass(device.getDevice(), swapchain.getSwapchainImageFormat());
-    Logger::getInstance().log("RenderPass Created.");
 
     // Create Graphics Pipeline without shaders (just to clear the screen)
     pipeline.createGraphicsPipeline(swapchain.getSwapchainExtent());

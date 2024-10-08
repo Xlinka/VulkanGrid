@@ -5,6 +5,9 @@
 #include <optional>
 #include <vulkan/vulkan.h>
 
+// Use include guards to prevent redefinition
+#define VULKAN_DEVICE_H
+
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;

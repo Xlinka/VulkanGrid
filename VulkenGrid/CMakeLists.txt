@@ -11,7 +11,6 @@ set(SOURCES
         Engine/VulkanInstance.cpp
         Engine/VulkanDevice.cpp
         Engine/VulkanSwapChain.cpp
-        Engine/VulkanRender.cpp
         Engine/VulkanBuffer.cpp
         Engine/VulkanCommandBuffer.cpp
         Logger/Logger.cpp
