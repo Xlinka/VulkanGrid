@@ -37,15 +37,18 @@ public:
     VkQueue getPresentQueue() const { return presentQueue; }
     VkCommandPool getCommandPool() const { return commandPool; }
     QueueFamilyIndices getQueueFamilyIndices() const { return queueFamilyIndices; }
+
+    // Overloaded function
     SwapChainSupportDetails querySwapChainSupport(VkSurfaceKHR surface) const;
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) const;
 
 private:
     VulkanInstance& instance;
     VkDevice device = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    VkCommandPool commandPool;
+    VkQueue graphicsQueue = VK_NULL_HANDLE;
+    VkQueue presentQueue = VK_NULL_HANDLE;
+    VkCommandPool commandPool = VK_NULL_HANDLE;
     QueueFamilyIndices queueFamilyIndices;
 
     void pickPhysicalDevice(VkSurfaceKHR surface);
