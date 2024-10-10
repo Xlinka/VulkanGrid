@@ -2,27 +2,31 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
-#include "VulkanDevice.h"
-#include "VulkanSwapChain.h"
+
+class VulkanDevice;
+class VulkanSwapchain;
+class Pipeline;
 
 class RenderPass {
 public:
     RenderPass(VulkanDevice& device, VulkanSwapchain& swapchain, VkFormat swapchainImageFormat);
     ~RenderPass();
-    
+
     VkRenderPass getRenderPass() const;
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-    void drawFrame();
+
+    void drawFrame(Pipeline* pipeline);
+
     void cleanup();
 
 private:
+    void createRenderPass(VkFormat swapchainImageFormat);
+    void createFramebuffers();
+    void createCommandBuffers();
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, Pipeline* pipeline);
+
     VulkanDevice& device;
     VulkanSwapchain& swapchain;
     VkRenderPass renderPass;
     std::vector<VkFramebuffer> framebuffers;
     std::vector<VkCommandBuffer> commandBuffers;
-
-    void createRenderPass(VkFormat swapchainImageFormat);
-    void createFramebuffers();
-    void createCommandBuffers();
 };

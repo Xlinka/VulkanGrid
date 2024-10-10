@@ -1,3 +1,4 @@
+
 #include "ShaderModule.h"
 #include <fstream>
 #include <stdexcept>
@@ -5,6 +6,7 @@
 
 ShaderModule::ShaderModule(VkDevice device, const std::string& filepath, VkShaderStageFlagBits stage)
     : device(device), shaderStage(stage) {
+    // Use the readFile method from FileUtils
     auto code = FileUtils::readFile(filepath);
     createShaderModule(code);
 }
@@ -13,18 +15,6 @@ ShaderModule::~ShaderModule() {
     vkDestroyShaderModule(device, shaderModule, nullptr);
 }
 
-std::vector<char> ShaderModule::readFile(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file: " + filepath);
-    }
-    size_t fileSize = static_cast<size_t>(file.tellg());
-    std::vector<char> buffer(fileSize);
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
-    return buffer;
-}
 
 void ShaderModule::createShaderModule(const std::vector<char>& code) {
     VkShaderModuleCreateInfo createInfo{};
@@ -33,6 +23,15 @@ void ShaderModule::createShaderModule(const std::vector<char>& code) {
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create shader module!");
+        throw std::runtime_error("Failed to create shader module!");
     }
+}
+
+VkPipelineShaderStageCreateInfo ShaderModule::getPipelineShaderStageCreateInfo() const {
+    VkPipelineShaderStageCreateInfo shaderStageInfo{};
+    shaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStageInfo.stage  = shaderStage;
+    shaderStageInfo.module = shaderModule;
+    shaderStageInfo.pName  = "main"; // Entry point function name
+    return shaderStageInfo;
 }

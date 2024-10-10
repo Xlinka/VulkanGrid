@@ -12,6 +12,9 @@ public:
     VkShaderModule getShaderModule() const { return shaderModule; }
     VkShaderStageFlagBits getShaderStage() const { return shaderStage; }
 
+    // Add this declaration
+    VkPipelineShaderStageCreateInfo getPipelineShaderStageCreateInfo() const;
+
 private:
     VkDevice device;
     VkShaderModule shaderModule;

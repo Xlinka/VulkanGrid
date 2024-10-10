@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <vector>
-#include "VulkanDevice.h"
-#include "VulkanSwapChain.h"
+
+class VulkanDevice;
+class VulkanSwapchain;
 
 class Pipeline {
 public:
@@ -18,9 +18,8 @@ public:
 private:
     VulkanDevice& device;
     VulkanSwapchain& swapchain;
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
 
-    void createPipelineLayout();
+    VkPipeline graphicsPipeline;
+    VkPipelineLayout pipelineLayout;
 };
