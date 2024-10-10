@@ -13,6 +13,7 @@ public:
     VkRenderPass getRenderPass() const;
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+    void cleanup();
 
 private:
     VulkanDevice& device;

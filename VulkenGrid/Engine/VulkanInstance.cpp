@@ -7,7 +7,7 @@
 void VulkanInstance::init() {
     Logger::getInstance().log("Initializing Vulkan instance...");
 
-    if (validationLayers.size() > 0 && !checkValidationLayerSupport()) {
+    if (enableValidationLayers && !checkValidationLayerSupport()) {
         Logger::getInstance().logError("Validation layers requested, but not available.");
         throw std::runtime_error("Validation layers requested, but not available!");
     }
@@ -28,7 +28,7 @@ void VulkanInstance::init() {
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
 
-    if (validationLayers.size() > 0) {
+    if (enableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
     } else {
@@ -42,6 +42,12 @@ void VulkanInstance::init() {
     }
 
     Logger::getInstance().log("Vulkan Instance created successfully.");
+
+    // Log all loaded extensions
+    Logger::getInstance().log("Loaded Extensions:");
+    for (const auto& extension : extensions) {
+        Logger::getInstance().log(extension);
+    }
 }
 
 void VulkanInstance::cleanup() {
@@ -81,7 +87,7 @@ std::vector<const char*> VulkanInstance::getRequiredExtensions() {
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if (validationLayers.size() > 0) {
+    if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 

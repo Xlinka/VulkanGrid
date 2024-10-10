@@ -13,10 +13,10 @@
 #include "SystemInfo.h"  
 #include "../Utils/LoggerUtils.h"
 
-void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline);
-void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
-void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
-void cleanup(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass);
+void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass* renderPass, Pipeline* pipeline);
+void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass);
+void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass);
+void cleanup(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass);
 
 int main() {
     Logger::getInstance().log("Application started.");
@@ -31,7 +31,8 @@ int main() {
         Logger::getInstance().log("GPU: " + SystemInfo::getGPUName());
         Logger::getInstance().log("VRAM: " + std::to_string(SystemInfo::getGPUVRAM()) + " GB");
         Logger::getInstance().log("System information collected.");
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         Logger::getInstance().logError("Failed to collect system information: " + std::string(e.what()));
         return -1;
     }
@@ -58,18 +59,20 @@ int main() {
 
     VulkanInstance vulkanInstance;
     VulkanDevice device(vulkanInstance);
+    VkSurfaceKHR surface;
 
     // Initialize Vulkan instance
     try {
         vulkanInstance.init();
-    } catch (const std::runtime_error& e) {
+    }
+    catch (const std::runtime_error& e) {
         Logger::getInstance().logError(std::string("Failed to initialize Vulkan Instance: ") + e.what());
         glfwDestroyWindow(window);
         glfwTerminate();
         return -1;
     }
 
-    VkSurfaceKHR surface;
+    // Create Vulkan Surface
     if (glfwCreateWindowSurface(vulkanInstance.getInstance(), window, nullptr, &surface) != VK_SUCCESS) {
         Logger::getInstance().logError("Failed to create Vulkan surface.");
         glfwDestroyWindow(window);
@@ -78,19 +81,38 @@ int main() {
     }
     Logger::getInstance().log("Vulkan Surface Created.");
 
+    // Initialize Device
+    try {
+        device.init(surface);
+    }
+    catch (const std::runtime_error& e) {
+        Logger::getInstance().logError(std::string("Failed to initialize Vulkan Device: ") + e.what());
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
+    }
+    Logger::getInstance().log("Vulkan Device Initialized.");
+
     VulkanSwapchain swapchain(vulkanInstance, device, surface);
-    RenderPass renderPass(device, swapchain, swapchain.getSwapchainImageFormat());
-    Pipeline pipeline(device, swapchain, renderPass.getRenderPass());
+    RenderPass* renderPass = nullptr;
+    Pipeline* pipeline = nullptr;
 
     try {
-        // Initialize Vulkan objects
-        initVulkan(window, vulkanInstance, device, swapchain, renderPass, pipeline);
-        Logger::getInstance().log("Vulkan successfully initialized.");
+        swapchain.init();
+        Logger::getInstance().log("Vulkan Swapchain Initialized.");
+
+        renderPass = new RenderPass(device, swapchain, swapchain.getSwapchainImageFormat());
+        Logger::getInstance().log("RenderPass created.");
+
+        pipeline = new Pipeline(device, swapchain, renderPass->getRenderPass());
+        pipeline->createGraphicsPipeline(swapchain.getSwapchainExtent());
+        Logger::getInstance().log("Graphics Pipeline Created (No Shaders, Clear Color Only).");
 
         // Enter the main application loop
         mainLoop(window, device, swapchain, pipeline, renderPass);
-    } catch (const std::exception& e) {
-        Logger::getInstance().logError(std::string("Error during execution: ") + e.what());
+    }
+    catch (const std::exception& e) {
+        Logger::getInstance().logError(std::string("Error during Vulkan initialization or execution: ") + e.what());
         cleanup(window, device, swapchain, pipeline, renderPass);
         return -1;
     }
@@ -102,26 +124,19 @@ int main() {
     return 0;
 }
 
-void initVulkan(GLFWwindow* window, VulkanInstance& instance, VulkanDevice& device, VulkanSwapchain& swapchain, RenderPass& renderPass, Pipeline& pipeline) {
-    Logger::getInstance().log("Initializing Vulkan...");
+void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass) {
+    Logger::getInstance().log("Entering main loop...");
 
-    // Initialize Vulkan instance
-    instance.init();
-    Logger::getInstance().log("Vulkan Instance Initialized.");
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        drawFrame(device, swapchain, pipeline, renderPass);
+    }
 
-    // Vulkan device and swapchain initialization
-    device.init(swapchain.getSurface());
-    Logger::getInstance().log("Vulkan Device Initialized.");
-
-    swapchain.init();
-    Logger::getInstance().log("Vulkan Swapchain Initialized.");
-
-    // Create Graphics Pipeline without shaders (just to clear the screen)
-    pipeline.createGraphicsPipeline(swapchain.getSwapchainExtent());
-    Logger::getInstance().log("Graphics Pipeline Created (No Shaders, Clear Color Only).");
+    vkDeviceWaitIdle(device.getDevice());
+    Logger::getInstance().log("Exiting main loop.");
 }
 
-void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass) {
+void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass) {
     Logger::getInstance().log("Drawing Frame...");
 
     uint32_t imageIndex;
@@ -143,7 +158,7 @@ void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipel
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass.getRenderPass();
+    renderPassInfo.renderPass = renderPass->getRenderPass();
     renderPassInfo.framebuffer = swapchain.getFramebuffers()[imageIndex];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchain.getSwapchainExtent();
@@ -184,7 +199,6 @@ void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipel
     presentInfo.pWaitSemaphores = signalSemaphores;
     presentInfo.swapchainCount = 1;
     VkSwapchainKHR swapchains[] = { swapchain.getSwapchain() };
-    presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapchains;
     presentInfo.pImageIndices = &imageIndex;
 
@@ -197,21 +211,15 @@ void drawFrame(VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipel
     Logger::getInstance().log("Frame Drawn.");
 }
 
-void mainLoop(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass) {
-    Logger::getInstance().log("Entering main loop...");
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-        drawFrame(device, swapchain, pipeline, renderPass);
+void cleanup(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline* pipeline, RenderPass* renderPass) {
+    if (pipeline) {
+        pipeline->cleanup();
+        delete pipeline;
     }
-
-    vkDeviceWaitIdle(device.getDevice());
-    Logger::getInstance().log("Exiting main loop.");
-}
-
-void cleanup(GLFWwindow* window, VulkanDevice& device, VulkanSwapchain& swapchain, Pipeline& pipeline, RenderPass& renderPass) {
-    pipeline.cleanup();
-    renderPass.~RenderPass();
+    if (renderPass) {
+        renderPass->cleanup();
+        delete renderPass;
+    }
     swapchain.cleanup();
     device.cleanup();
 

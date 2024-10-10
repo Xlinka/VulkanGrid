@@ -30,6 +30,7 @@ void VulkanSwapchain::init() {
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
+    Logger::getInstance().log("Chosen image count for swapchain: " + std::to_string(imageCount));
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -47,11 +48,13 @@ void VulkanSwapchain::init() {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
+        Logger::getInstance().log("Using concurrent sharing mode for swapchain images.");
     }
     else {
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.queueFamilyIndexCount = 0;
         createInfo.pQueueFamilyIndices = nullptr;
+        Logger::getInstance().log("Using exclusive sharing mode for swapchain images.");
     }
 
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
@@ -77,6 +80,7 @@ void VulkanSwapchain::init() {
     Logger::getInstance().log("Creating image views...");
     swapchainImageViews.resize(swapchainImages.size());
     for (size_t i = 0; i < swapchainImages.size(); i++) {
+        Logger::getInstance().log("Creating image view for swapchain image index: " + std::to_string(i));
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = swapchainImages[i];
@@ -93,9 +97,10 @@ void VulkanSwapchain::init() {
         createInfo.subresourceRange.layerCount = 1;
 
         if (vkCreateImageView(device.getDevice(), &createInfo, nullptr, &swapchainImageViews[i]) != VK_SUCCESS) {
-            Logger::getInstance().logError("Failed to create image views!");
+            Logger::getInstance().logError("Failed to create image view at index " + std::to_string(i));
             throw std::runtime_error("Failed to create image views!");
         }
+        Logger::getInstance().log("Image view created successfully at index: " + std::to_string(i));
     }
 
     Logger::getInstance().log("Creating semaphores...");
@@ -115,10 +120,12 @@ void VulkanSwapchain::cleanup() {
     Logger::getInstance().log("Cleaning up Vulkan Swapchain...");
 
     for (auto framebuffer : swapchainFramebuffers) {
+        Logger::getInstance().log("Destroying framebuffer...");
         vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
     }
 
     for (auto imageView : swapchainImageViews) {
+        Logger::getInstance().log("Destroying image view...");
         vkDestroyImageView(device.getDevice(), imageView, nullptr);
     }
 

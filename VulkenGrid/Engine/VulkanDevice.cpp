@@ -1,24 +1,26 @@
 #include "VulkanDevice.h"
-#include "Logger.h"
 #include <stdexcept>
-#include <set>
-#include <vector>
 
 VulkanDevice::VulkanDevice(VulkanInstance& instance) : instance(instance) {}
 
 void VulkanDevice::init(VkSurfaceKHR surface) {
     Logger::getInstance().log("Initializing Vulkan Device...");
     pickPhysicalDevice(surface);
-    VulkanDevice::createLogicalDevice(surface);
-    VulkanDevice::createCommandPool();
+    createLogicalDevice(surface);
+    createCommandPool();
     Logger::getInstance().log("Vulkan Device initialized successfully.");
 }
 
 void VulkanDevice::cleanup() {
     Logger::getInstance().log("Cleaning up Vulkan Device...");
-    vkDestroyCommandPool(device, commandPool, nullptr);
-    vkDestroyDevice(device, nullptr);
-    Logger::getInstance().log("Vulkan Device cleaned up successfully.");
+    if (commandPool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+        Logger::getInstance().log("Command pool destroyed successfully.");
+    }
+    if (device != VK_NULL_HANDLE) {
+        vkDestroyDevice(device, nullptr);
+        Logger::getInstance().log("Logical device destroyed successfully.");
+    }
 }
 
 void VulkanDevice::pickPhysicalDevice(VkSurfaceKHR surface) {
@@ -54,7 +56,10 @@ void VulkanDevice::createLogicalDevice(VkSurfaceKHR surface) {
 
     float queuePriority = 1.0f;
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies = {
+        queueFamilyIndices.graphicsFamily.value(),
+        queueFamilyIndices.presentFamily.value()
+    };
 
     for (uint32_t queueFamily : uniqueQueueFamilies) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -71,6 +76,23 @@ void VulkanDevice::createLogicalDevice(VkSurfaceKHR surface) {
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pEnabledFeatures = &deviceFeatures;
+
+    auto extensions = getDeviceExtensions();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
+
+    if (instance.enableValidationLayers) {
+        const auto& validationLayers = instance.getValidationLayers();
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+    } else {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    Logger::getInstance().log("Device extensions: ");
+    for (const auto& ext : extensions) {
+        Logger::getInstance().log(ext);
+    }
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
         Logger::getInstance().logError("Failed to create logical device!");
@@ -99,7 +121,7 @@ void VulkanDevice::createCommandPool() {
 bool VulkanDevice::isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
     Logger::getInstance().log("Checking if device is suitable...");
     QueueFamilyIndices indices = findQueueFamilies(device, surface);
-    bool extensionsSupported = true; // Add your extension checks if necessary
+    bool extensionsSupported = checkDeviceExtensionSupport(device);
     bool swapChainAdequate = false;
 
     if (extensionsSupported) {
@@ -168,4 +190,46 @@ SwapChainSupportDetails VulkanDevice::querySwapChainSupport(VkSurfaceKHR surface
     }
 
     return details;
+}
+
+bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) const {
+    Logger::getInstance().log("Checking device extension support...");
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    // Store the device extensions in a local variable to keep iterators valid
+    std::vector<const char*> deviceExtensions = getDeviceExtensions();
+    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+    // Log available device extensions
+    Logger::getInstance().log("Available Device Extensions:");
+    for (const auto& extension : availableExtensions) {
+        Logger::getInstance().log(extension.extensionName);
+    }
+
+    for (const auto& extension : availableExtensions) {
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+    if (!requiredExtensions.empty()) {
+        Logger::getInstance().log("Missing required device extensions:");
+        for (const auto& missingExt : requiredExtensions) {
+            Logger::getInstance().logError(missingExt.c_str());
+        }
+    }
+
+    Logger::getInstance().log("Device extension support " + std::string(requiredExtensions.empty() ? "available" : "not available"));
+    return requiredExtensions.empty();
+}
+
+std::vector<const char*> VulkanDevice::getDeviceExtensions() const {
+    return {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+        VK_EXT_MEMORY_BUDGET_EXTENSION_NAME
+        // Removed VK_KHR_SURFACE_EXTENSION_NAME as it is an instance extension
+    };
 }

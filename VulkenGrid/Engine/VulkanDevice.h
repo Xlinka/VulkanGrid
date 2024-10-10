@@ -4,8 +4,11 @@
 #include <vector>
 #include <optional>
 #include <vulkan/vulkan.h>
+#include <string>
+#include <set>
+#include "Logger.h"
 
-// Use include guards to prevent redefinition
+#ifndef VULKAN_DEVICE_H
 #define VULKAN_DEVICE_H
 
 struct QueueFamilyIndices {
@@ -38,7 +41,7 @@ public:
 
 private:
     VulkanInstance& instance;
-    VkDevice device;
+    VkDevice device = VK_NULL_HANDLE;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkQueue graphicsQueue;
     VkQueue presentQueue;
@@ -50,4 +53,8 @@ private:
     void createCommandPool();
     bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) const;
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device) const;
+    std::vector<const char*> getDeviceExtensions() const;
 };
+
+#endif // VULKAN_DEVICE_H
