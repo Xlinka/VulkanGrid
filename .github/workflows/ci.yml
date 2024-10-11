@@ -11,24 +11,33 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+
     steps:
+    # Checkout the repository
     - name: Checkout repository
-      uses: actions/checkout@v3
-    
+      uses: actions/checkout@v2
+
+    # Add PPA for GLFW
     - name: Add PPA for GLFW
       run: sudo add-apt-repository ppa:mir-team/release
-    
+
+    # Install dependencies
     - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake g++ libvulkan-dev glfw3 libglfw3-dev
+
+    # Debugging: Print the current directory structure
+    - name: Print working directory
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake g++ libvulkan-dev libglfw3 libglfw3-dev
-    
+        pwd
+        ls -al
+
+    # Create build directory and run CMake
     - name: Configure CMake
       run: |
         mkdir -p build
         cd build
         cmake ..
-    
+        
     - name: Build project
       run: |
         cd build
@@ -36,26 +45,36 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+
     steps:
+    # Checkout the repository
     - name: Checkout repository
-      uses: actions/checkout@v3
-    
-    - name: Setup Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
-      with:
-        vulkan-query-version: 1.3.204.0
-        vulkan-components: Vulkan-Headers, Vulkan-Loader
-        vulkan-use-cache: true
-    
-    - name: Setup CMake
-      uses: lukka/get-cmake@latest
-    
+      uses: actions/checkout@v2
+
+    # Set up Vulkan SDK and dependencies
+    - name: Set up Vulkan SDK
+      run: |
+        choco install vulkansdk --version=1.2.189.0
+        setx VULKAN_SDK "C:\VulkanSDK\1.2.189.0"
+        setx PATH "%VULKAN_SDK%\Bin;%VULKAN_SDK%\Lib;%PATH%"
+
+    # Install CMake using the modern setup-cmake action
+    - name: Install CMake
+      uses: actions/setup-cmake@v3
+
+    # Debugging: Print the current directory structure
+    - name: Print working directory
+      run: |
+        echo %cd%
+        dir
+
+    # Create build directory and run CMake
     - name: Configure CMake
       run: |
         mkdir build
         cd build
-        cmake .. -G "Visual Studio 17 2022" -A x64
-    
+        cmake .. -G "Visual Studio 16 2019" -A x64
+
     - name: Build project
       run: |
         cd build
