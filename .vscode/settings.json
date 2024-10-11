@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "F:/VulkenGrid/VulkenGrid",
+    "cmake.sourceDirectory": "${workspaceFolder}/VulkenGrid",
     "files.associations": {
         "*.embeddedhtml": "html",
         "stdexcept": "cpp",
