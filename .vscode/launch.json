@@ -8,7 +8,7 @@
          "program": "${workspaceFolder}/build/${command:cmake.buildType}/VulkanGridEngine.exe", // Use active build configuration
          "args": [],
          "stopAtEntry": false,
-         "cwd": "${workspaceFolder}",
+         "cwd": "${workspaceFolder}/build/${command:cmake.buildType}",
          "environment": [],
          "externalConsole": false,
          "preLaunchTask": "CMake: build",
