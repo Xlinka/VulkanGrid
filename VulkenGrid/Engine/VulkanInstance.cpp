@@ -4,6 +4,19 @@
 #include <stdexcept>
 #include <iostream>
 
+// Define enableValidationLayers based on build configuration
+#ifdef NDEBUG
+    const bool enableValidationLayers = false;
+#else
+    const bool enableValidationLayers = true;
+#endif
+
+// Define validation layers to enable
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+
+// VulkanInstance class implementation
 void VulkanInstance::init() {
     Logger::getInstance().log("Initializing Vulkan instance...");
 
@@ -74,6 +87,7 @@ bool VulkanInstance::checkValidationLayerSupport() {
         }
 
         if (!layerFound) {
+            Logger::getInstance().logError(std::string("Validation layer not found: ") + layerName);
             return false;
         }
     }
@@ -87,7 +101,14 @@ std::vector<const char*> VulkanInstance::getRequiredExtensions() {
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if (enableValidationLayers) {
+    // Define enableDebugUtils based on build configuration
+    #ifdef NDEBUG
+        const bool enableDebugUtils = false;
+    #else
+        const bool enableDebugUtils = true;
+    #endif
+
+    if (enableValidationLayers && enableDebugUtils) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
