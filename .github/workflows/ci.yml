@@ -11,23 +11,22 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3
+    
     - name: Add PPA for GLFW
       run: sudo add-apt-repository ppa:mir-team/release
-
+    
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cmake g++ libvulkan-dev glfw3 libglfw3-dev
-
+    
     - name: Configure CMake
       run: |
         mkdir -p build
         cd build
         cmake ..
-        
+    
     - name: Build project
       run: |
         cd build
@@ -35,26 +34,25 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3
+    
     - name: Set up Vulkan SDK
       run: |
         choco install vulkansdk --version=1.2.189.0
-        setx VULKAN_SDK "C:\VulkanSDK\1.2.189.0"
-        setx PATH "%VULKAN_SDK%\Bin;%VULKAN_SDK%\Lib;%PATH%"
-
-    - name: Install CMake
-      uses: actions/setup-cmake@v3
-
+        echo "VULKAN_SDK=C:\VulkanSDK\1.2.189.0" >> $GITHUB_ENV
+        echo "C:\VulkanSDK\1.2.189.0\Bin;C:\VulkanSDK\1.2.189.0\Lib" >> $GITHUB_PATH
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
     - name: Configure CMake
       run: |
         mkdir build
         cd build
-        cmake .. -G "Visual Studio 16 2019" -A x64
-
+        cmake .. -G "Visual Studio 17 2022" -A x64
+    
     - name: Build project
       run: |
         cd build
