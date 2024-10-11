@@ -1,0 +1,22 @@
+{
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "name": "Launch Program",
+         "type": "cppvsdbg",
+         "request": "launch",
+         "program": "${workspaceFolder}/build/${command:cmake.buildType}/VulkanGridEngine.exe", // Use active build configuration
+         "args": [],
+         "stopAtEntry": false,
+         "cwd": "${workspaceFolder}",
+         "environment": [],
+         "externalConsole": false,
+         "preLaunchTask": "CMake: build",
+         "logging": {
+            "trace": true,
+            "traceResponse": true,
+            "engineLogging": true
+         }
+      }
+   ]
+}
