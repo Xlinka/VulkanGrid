@@ -14,7 +14,7 @@ set(SOURCES
     Engine/VulkanCommandBuffer.cpp
     Logger/Logger.cpp
     Logger/SystemInfo.cpp
-    Render/Pipeline.cpp
+    Render/PipeLine.cpp
     Render/ShaderModule.cpp
     Render/RenderPass.cpp
     Utils/FilesUtils.cpp
