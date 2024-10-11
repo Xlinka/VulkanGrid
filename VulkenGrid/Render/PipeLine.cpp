@@ -19,8 +19,8 @@ void Pipeline::createGraphicsPipeline(VkExtent2D swapchainExtent) {
     Logger::getInstance().log("Creating Graphics Pipeline...");
 
     // Create shader modules
-    ShaderModule vertShaderModule(device.getDevice(), "shaders/vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-    ShaderModule fragShaderModule(device.getDevice(), "shaders/frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+    ShaderModule vertShaderModule(device.getDevice(), "shaders/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+    ShaderModule fragShaderModule(device.getDevice(), "shaders/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
     // Shader stages
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages = {
