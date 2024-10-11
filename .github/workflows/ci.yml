@@ -23,16 +23,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake g++ libvulkan-dev libglfw3 libglfw3-dev
     
-    - name: Debug - Print directory structure
-      run: |
-        pwd
-        ls -R
-    
     - name: Configure CMake
       run: |
         mkdir -p build
         cd build
-        cmake ..
+        cmake ../VulkenGrid
       working-directory: ${{ github.workspace }}
     
     - name: Build project
@@ -57,16 +52,11 @@ jobs:
     - name: Setup CMake
       uses: lukka/get-cmake@latest
     
-    - name: Debug - Print directory structure
-      run: |
-        Get-Location
-        Get-ChildItem -Recurse
-    
     - name: Configure CMake
       run: |
         mkdir build -ErrorAction SilentlyContinue
         cd build
-        cmake ..
+        cmake ..\VulkenGrid
       working-directory: ${{ github.workspace }}
     
     - name: Build project
