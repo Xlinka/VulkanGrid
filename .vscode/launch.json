@@ -5,10 +5,10 @@
          "name": "Launch Program",
          "type": "cppvsdbg",
          "request": "launch",
-         "program": "${workspaceFolder}/build/${command:cmake.buildType}/VulkanGridEngine.exe", // Use active build configuration
+         "program": "${workspaceFolder}/VulkenGrid/build/${command:cmake.buildType}/VulkanGridEngine.exe", // Use active build configuration
          "args": [],
          "stopAtEntry": false,
-         "cwd": "${workspaceFolder}/build/${command:cmake.buildType}",
+         "cwd": "${workspaceFolder}/VulkenGrid/build/${command:cmake.buildType}",
          "environment": [],
          "externalConsole": false,
          "preLaunchTask": "CMake: build",
